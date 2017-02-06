@@ -76,6 +76,7 @@ $(function() {
         },
 
         renderList: function() {
+            this.toggleList();
             this.$el.find('ul.dropdown-list').html('');
             var collection = _.filter(this.collection.toJSON(), this.filter)
             collection = _.sortBy(collection, 'firstName', this)
@@ -98,6 +99,10 @@ $(function() {
             }
             return false;
         },
+        toggleList: function() {
+            if ($('input').val()) $('.dropdown-list').removeAttr('hidden');
+            else $('.dropdown-list').attr('hidden', true);
+        },
         on_keypress: function(e) {
             if (e.keyCode == 40) {
                 $('.dropdown-list li.active').removeClass('active').next().addClass('active');
@@ -107,93 +112,67 @@ $(function() {
             }
             if (e.keyCode == 13) {
                 var thisLi = $('.dropdown-list li.active');
-                this.addMail(thisLi.text());
-                thisLi.remove();
+                this.addMail(thisLi.text(), thisLi);
             }
         },
         selectValue: function(e) {
             var thisLi = $(e.target).closest('li')
-                // $('.dropdown-list li.active').removeClass('active');
-                // $('input').val($(e.target).closest('li').addClass('active').text());
-            this.addMail(thisLi.addClass('active').text());
-
-            thisLi.remove()
+            $('.dropdown-list li.active').removeClass('active');
+            this.addMail(thisLi.text(), thisLi);
         },
-        addMail: function(credentials) {
+        addMail: function(credentials, li) {
             var lastSpace = credentials.lastIndexOf(' '),
                 mail = credentials.slice(lastSpace);
             $('.emails').append('<li>' + mail + '<span>×</span></ li>');
-
+            li.next().addClass('active')
+            li.remove();
         },
         removeEmail: function(e) {
-            $(e.target).closest('li').remove();
+            li = $(e.target).closest('li')
+            li.remove();
+            item = _.find(this.collection.toJSON(), function(item) {
+                return item.email === li.text().replace('×', '').trim()
+            }, this)
+            this.addListItem(item)
         },
         addOption: function(opt) {
             var option = new app.views.Option({ model: opt });
-            this.$el.find('select').append(option.render().el)
+            this.$el.find('select').append(option.render().el);
         },
         addListItem: function(item, index) {
-            if (index > 4) return;
             var li = $('<li>'),
                 value = $('#search').val(),
-                strong = value.charAt(0).toUpperCase() + value.slice(1);
-            regExp = new RegExp(strong, 'i'),
+                regExp = new RegExp(strong, 'i'),
+                strong = value.charAt(0).toUpperCase() + value.slice(1),
                 str = '';
+
+            if (index > 4) return;
+
             if (strong) {
                 for (key in item) {
                     if (key === '_id') continue;
-
                     if (item[key].search(regExp) === 0) {
                         if (key === 'email') {
-
-                            str += (item[key].replace(regExp, '<strong>' + strong + '</strong>')).toLowerCase()
+                            str += (item[key].replace(regExp, '<strong>' + strong + '</strong>')).toLowerCase();
                         } else {
-                            str += item[key].replace(regExp, '<strong>' + strong + '</strong>') + ' '
+                            str += item[key].replace(regExp, '<strong>' + strong + '</strong>') + ' ';
                         }
                     } else {
                         if (key === 'email') {
-                            str += item[key]
+                            str += item[key];
                         } else {
-                            str += item[key] + ' '
+                            str += item[key] + ' ';
                         }
                     }
                 }
-            } else {
-                for (key in item) {
-                    if (key === '_id') continue;
-                    if (key === 'email') {
-                        str += item[key]
-                    } else {
-                        str += item[key] + ' '
-                    }
-
-                }
             }
-
-            if (!index) li.addClass('active')
+            if (!$('.dropdown-list .active').length) li.addClass('active');
             this.$el.find('ul.dropdown-list').append(li.append(str));
-
-        },
-
-
+        }
     })
-
-
-
-
-
-
     $.getJSON("data.json").success(function(data) {
         app.selectCollection = new app.collections.Select(data);
-
         app.selectView = new app.views.Select({ collection: app.selectCollection });
-
-        // $('.select').append(app.selectView.render());
         $('.select').append(app.selectView.renderList());
-
     })
-
-
-
-
 })
