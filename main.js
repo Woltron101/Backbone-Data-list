@@ -84,10 +84,12 @@ $(function() {
         },
         events: {
             'input #search': function() {
-                this.render();
+                // this.render();
                 this.renderList();
             },
-            'click .dropdown-list li': 'selectValue'
+            'click .dropdown-list li': 'selectValue',
+            'click .emails li span': 'removeEmail'
+
         },
         filter: function(obj) {
             var text = new RegExp($('#search').val(), 'i');
@@ -104,21 +106,34 @@ $(function() {
                 $('li.active').removeClass('active').prev().addClass('active');
             }
             if (e.keyCode == 13) {
-                $('input').val($('.dropdown-list li.active').text());
+                var thisLi = $('.dropdown-list li.active');
+                this.addMail(thisLi.text());
+                thisLi.remove();
             }
         },
         selectValue: function(e) {
-            $('.dropdown-list li.active').removeClass('active');
-            $('input').val($(e.target).closest('li').addClass('active').text());
+            var thisLi = $(e.target).closest('li')
+                // $('.dropdown-list li.active').removeClass('active');
+                // $('input').val($(e.target).closest('li').addClass('active').text());
+            this.addMail(thisLi.addClass('active').text());
+
+            thisLi.remove()
         },
-        getMail: function(credentials) {
-            alert(credentials)
-        }
+        addMail: function(credentials) {
+            var lastSpace = credentials.lastIndexOf(' '),
+                mail = credentials.slice(lastSpace);
+            $('.emails').append('<li>' + mail + '<span>×</span></ li>');
+
+        },
+        removeEmail: function(e) {
+            $(e.target).closest('li').remove();
+        },
         addOption: function(opt) {
             var option = new app.views.Option({ model: opt });
             this.$el.find('select').append(option.render().el)
         },
         addListItem: function(item, index) {
+            if (index > 4) return;
             var li = $('<li>'),
                 value = $('#search').val(),
                 strong = value.charAt(0).toUpperCase() + value.slice(1);
@@ -131,18 +146,27 @@ $(function() {
                     if (item[key].search(regExp) === 0) {
                         if (key === 'email') {
 
-                            str += (item[key].replace(regExp, '<strong>' + strong + '</strong>') + ' ').toLowerCase()
+                            str += (item[key].replace(regExp, '<strong>' + strong + '</strong>')).toLowerCase()
                         } else {
                             str += item[key].replace(regExp, '<strong>' + strong + '</strong>') + ' '
                         }
                     } else {
-                        str += item[key] + ' '
+                        if (key === 'email') {
+                            str += item[key]
+                        } else {
+                            str += item[key] + ' '
+                        }
                     }
                 }
             } else {
                 for (key in item) {
                     if (key === '_id') continue;
-                    str += item[key] + ' '
+                    if (key === 'email') {
+                        str += item[key]
+                    } else {
+                        str += item[key] + ' '
+                    }
+
                 }
             }
 
@@ -164,7 +188,7 @@ $(function() {
 
         app.selectView = new app.views.Select({ collection: app.selectCollection });
 
-        $('.select').append(app.selectView.render());
+        // $('.select').append(app.selectView.render());
         $('.select').append(app.selectView.renderList());
 
     })
