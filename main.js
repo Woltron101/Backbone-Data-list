@@ -5,10 +5,10 @@ $(function() {
         views: {},
         collections: {}
     }
+
     var template = function(id) {
         return _.template($('#' + id).html());
     }
-
 
     app.views.Search = Backbone.View.extend({
         el: '#search',
@@ -19,24 +19,10 @@ $(function() {
             var text = this.$el.val();
             app.views.Select.search = text;
             return text;
-        },
-    })
-
-    app.models.ListItem = Backbone.Model.extend({})
-    app.views.ListItem = Backbone.View.extend({
-        tagName: 'li',
-
-        template: template('listIteTemplate'),
-
-        render: function() {
-            this.$el.html(this.template(this.model));
-            return this;
         }
     })
 
-    app.collections.Select = Backbone.Collection.extend({
-        model: app.models.Option
-    });
+    app.collections.Select = Backbone.Collection.extend({});
 
     app.views.Select = Backbone.View.extend({
         el: '.select',
@@ -51,10 +37,11 @@ $(function() {
             this.toggleList();
             this.$el.find('ul.dropdown-list').html('');
             var collection = _.filter(this.collection.toJSON(), this.filter);
-            collection = _.sortBy(collection, 'firstName', this)
+            collection = _.sortBy(collection, 'firstName', this);
             collection.forEach(this.addListItem, this);
             return this;
         },
+
         events: {
             'input #search': 'render',
             'click .dropdown-list li': 'selectValue',
@@ -113,7 +100,8 @@ $(function() {
         },
 
         moveToDropDown: function(li) {
-            var item = _.find(this.collection.toJSON(), function(item) {
+            var collection = _.filter(this.collection.toJSON(), this.filter);
+            var item = _.find(collection, function(item) {
                 return item.email === li.text().replace('×', '').trim();
             }, this);
             this.addListItem(item);
@@ -127,11 +115,10 @@ $(function() {
                 regExp = new RegExp(strong, 'i'),
                 str = '';
 
-            if (index > 4) return;
+            if (index > 4) return this;
 
             if (strong) {
                 for (key in item) {
-                    if (key === '_id') continue;
                     if (item[key].search(regExp) === 0) {
                         if (key === 'email') {
                             str += (item[key].replace(regExp, '<strong>' + strong + '</strong>')).toLowerCase();
